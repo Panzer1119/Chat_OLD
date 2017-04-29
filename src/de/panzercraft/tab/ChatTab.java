@@ -7,7 +7,9 @@ package de.panzercraft.tab;
 
 import de.panzercraft.message.MessageReceiveListener;
 import de.panzercraft.message.MessageSender;
+import java.awt.BorderLayout;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 
 /**
@@ -40,11 +42,14 @@ public class ChatTab extends JPanel {
     private MessageSender messageSender = null;
     
     private final JTextPane textPane = new JTextPane();
+    private final JScrollPane scrollPane = new JScrollPane(textPane, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     
     private boolean showOnlineUser = false;
     
     public ChatTab(String tabName) {
         this.tabName = tabName;
+        setLayout(new BorderLayout());
+        add(scrollPane, BorderLayout.CENTER);
     }
 
     public String getTabName() {
@@ -92,6 +97,11 @@ public class ChatTab extends JPanel {
 
     public ChatTab setShowOnlineUser(boolean showOnlineUser) {
         this.showOnlineUser = showOnlineUser;
+        return this;
+    }
+    
+    public ChatTab sendMessage(String message) {
+        messageSender.sendMessage(message, this);
         return this;
     }
     

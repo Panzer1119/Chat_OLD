@@ -5,6 +5,7 @@
  */
 package de.panzercraft;
 
+import de.panzercraft.tab.ChatTab;
 import jaddon.controller.JAddOnStandard;
 import jaddon.controller.JFrameManager;
 import jaddon.controller.StandardMethods;
@@ -12,14 +13,21 @@ import jaddon.controller.StaticStandard;
 import jaddon.utils.JUtils;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.util.ArrayList;
+import javax.swing.JButton;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
+import javax.swing.JTextField;
 import javax.swing.UIManager;
 
 /**
@@ -36,13 +44,19 @@ public class Chat implements ActionListener, StandardMethods, WindowListener {
     //Java Swing Main Start
     public static final JFrameManager frame = new JFrameManager(PROGRAMNAME, VERSION);
     private final JAddOnStandard standard = new JAddOnStandard(PROGRAMNAME, VERSION, true, true, false, true, true);
-    private final JTabbedPane tp = new JTabbedPane();
+    private final JTabbedPane tabbedpane_chattabs = new JTabbedPane();
+    private final JPanel panel_send = new JPanel();
+    private final JTextField textfield_send = new JTextField();
+    private final JButton button_send = new JButton("Send");
     private final JMenuBar MB1 = new JMenuBar();
     private final JMenu M1 = new JMenu("File");
     private final JMenu M2 = new JMenu("Edit");
     private final JMenuItem M1I1 = new JMenuItem("Exit");
     private final JMenuItem M1I2 = new JMenuItem("Restart");
     private final JMenuItem M2I1 = new JMenuItem("Change Language");
+    
+    private final ArrayList<ChatTab> chattabs = new ArrayList<>();
+    private ChatTab chattab_active = null;
     
     private boolean init = false;
     
@@ -66,6 +80,8 @@ public class Chat implements ActionListener, StandardMethods, WindowListener {
             StaticStandard.getConfig().setProperty("lang", StaticStandard.getLang().getLang());
             StaticStandard.getConfig().saveConfig();
             reloadLang();
+        } else if(e.getSource() == button_send) {
+            send();
         } else {
             /*
             for(Tab tab : tabs) {
@@ -75,10 +91,48 @@ public class Chat implements ActionListener, StandardMethods, WindowListener {
         }
     }
     
-    private void initFrame() {
+    private void send() {
+        String textToSend = textfield_send.getText();
+        if(textToSend.isEmpty() || chattab_active == null) {
+            return;
+        }
+        chattab_active.sendMessage(textToSend);
+    }
+    
+    private void initListener() {
         M1I1.addActionListener(this);
         M1I2.addActionListener(this);
         M2I1.addActionListener(this);
+        tabbedpane_chattabs.addChangeListener(e -> {
+            int selectedIndex = tabbedpane_chattabs.getSelectedIndex();
+            if(selectedIndex != -1) {
+                chattab_active = chattabs.get(selectedIndex);
+            } else {
+                chattab_active = null;
+            }
+        });
+        button_send.addActionListener(this);
+        textfield_send.addKeyListener(new KeyListener() {
+            
+            @Override
+            public void keyTyped(KeyEvent e) {
+                if(e.getKeyChar() == 10) {
+                    send();
+                }
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+            }
+            
+        });
+    }
+    
+    private void initFrame() {
         M1.add(M1I2);
         M1.add(M1I1);
         M2.add(M2I1);
@@ -87,7 +141,12 @@ public class Chat implements ActionListener, StandardMethods, WindowListener {
         frame.setJMenuBar(MB1);
         //addTabs();
         //initTabs();
-        frame.add(tp, BorderLayout.CENTER);
+        textfield_send.setPreferredSize(new Dimension(500, 25));
+        panel_send.setLayout(new FlowLayout());
+        panel_send.add(textfield_send);
+        panel_send.add(button_send);
+        frame.add(tabbedpane_chattabs, BorderLayout.CENTER);
+        frame.add(panel_send, BorderLayout.SOUTH);
     }
 
     @Override
@@ -143,6 +202,7 @@ public class Chat implements ActionListener, StandardMethods, WindowListener {
         frame.setLayout(new BorderLayout());
         frame.addWindowListener(this);
         //frame.addMouseListener(this);
+        initListener();
         initFrame();
         frame.pack();
         frame.setLocationRelativeTo(null);
