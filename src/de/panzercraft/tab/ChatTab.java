@@ -11,6 +11,7 @@ import de.panzercraft.message.MessageReceiveListener;
 import de.panzercraft.message.MessageReceiveListenerImpl;
 import de.panzercraft.message.MessageSender;
 import de.panzercraft.message.MessageSenderImpl;
+import de.panzercraft.net.Connector;
 import jaddon.controller.StaticStandard;
 import java.awt.BorderLayout;
 import java.time.Instant;
@@ -53,6 +54,7 @@ public class ChatTab extends JPanel {
     private String username = System.getProperty("user.name");
     private MessageReceiveListener messageReceiveListener = null;
     private MessageSender messageSender = null;
+    private Connector connector = null;
     
     private String dateTimeFormat = "dd.MM.yyyy HH:mm:ss";
     
