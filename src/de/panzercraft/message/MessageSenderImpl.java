@@ -14,13 +14,14 @@ import jaddon.controller.StaticStandard;
  */
 public class MessageSenderImpl {
     
-    public static final MessageSender messageSender_local_new = (String message, ChatTab chatTab) -> {
+    public static final MessageSender messageSender_echo = (MessageEvent me) -> {
         try {
-            chatTab.addText(message);
-            StaticStandard.log(String.format("[%s]: %s", chatTab.getTabName(), message)); //TODO Überarbeiten
+            final ChatTab chatTab =  me.getChatTab();
             chatTab.chat.textField_send.setText("");
+            chatTab.receiveMessage(me);
             return true;
         } catch (Exception ex) {
+            StaticStandard.logErr("Error while sending message: " + ex, ex);
             return false;
         }
     };

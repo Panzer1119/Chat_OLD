@@ -11,6 +11,6 @@ package de.panzercraft.message;
  */
 public interface MessageReceiveListener {
     
-    public void messageReceived(MessageReceivedEvent mre);
+    public boolean messageReceived(MessageEvent me);
     
 }

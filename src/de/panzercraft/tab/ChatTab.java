@@ -6,11 +6,15 @@
 package de.panzercraft.tab;
 
 import de.panzercraft.Chat;
+import de.panzercraft.message.MessageEvent;
 import de.panzercraft.message.MessageReceiveListener;
 import de.panzercraft.message.MessageReceiveListenerImpl;
 import de.panzercraft.message.MessageSender;
 import de.panzercraft.message.MessageSenderImpl;
+import jaddon.controller.StaticStandard;
 import java.awt.BorderLayout;
+import java.time.Instant;
+import java.util.ArrayList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
@@ -42,7 +46,11 @@ public class ChatTab extends JPanel {
     
     private ChatType chatType = ChatType.INVALID;
     
+    private final ArrayList<MessageEvent> messages_received = new ArrayList<>();
+    private final ArrayList<MessageEvent> messages_sent = new ArrayList<>();
+    
     private String tabName = "";
+    private String username = System.getProperty("user.name");
     private MessageReceiveListener messageReceiveListener = null;
     private MessageSender messageSender = null;
     
@@ -51,6 +59,7 @@ public class ChatTab extends JPanel {
     private final JTextPane textPane = new JTextPane();
     private final JScrollPane scrollPane = new JScrollPane(textPane, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     
+    private boolean showTimestamp = false;
     private boolean showOnlineUser = false;
     
     public ChatTab(String tabName, ChatType chatType, Chat chat) {
@@ -71,7 +80,7 @@ public class ChatTab extends JPanel {
                 break;
             case LOCAL_NEW:
                 messageReceiveListener = MessageReceiveListenerImpl.messageReceiveListener_local_new;
-                messageSender = MessageSenderImpl.messageSender_local_new;
+                messageSender = MessageSenderImpl.messageSender_echo;
                 break;
             case USB:
                 messageReceiveListener = null;
@@ -91,6 +100,24 @@ public class ChatTab extends JPanel {
         return this;
     }
 
+    public boolean isShowTimestamp() {
+        return showTimestamp;
+    }
+
+    public ChatTab setShowTimestamp(boolean showTimestamp) {
+        this.showTimestamp = showTimestamp;
+        return this;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public ChatTab setUsername(String username) {
+        this.username = username;
+        return this;
+    }
+    
     public MessageReceiveListener getMessageReceiveListener() {
         return messageReceiveListener;
     }
@@ -138,8 +165,36 @@ public class ChatTab extends JPanel {
     
     public ChatTab sendMessage(String message) {
         if(messageSender != null) {
-            messageSender.sendMessage(message, this);
+            MessageEvent me = new MessageEvent(message, this, Instant.now());
+            messageSender.sendMessage(me);
+            messages_sent.add(me);
         }
+        return this;
+    }
+    
+    public ChatTab receiveMessage(MessageEvent me) {
+        if(messageReceiveListener != null) {
+            messageReceiveListener.messageReceived(me);
+            messages_received.add(me);
+        }
+        return this;
+    }
+    
+    public Thread reloadReceivedMessages() {
+        if(messageReceiveListener == null) {
+            return null;
+        }
+        clearText();
+        Runnable run = () -> {
+            for(MessageEvent me : messages_received) {
+                messageReceiveListener.messageReceived(me);
+            }
+        };
+        return StaticStandard.execute(run);
+    }
+    
+    public ChatTab clearText() {
+        textPane.setText("");
         return this;
     }
 

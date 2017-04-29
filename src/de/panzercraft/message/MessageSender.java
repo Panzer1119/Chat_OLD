@@ -5,14 +5,12 @@
  */
 package de.panzercraft.message;
 
-import de.panzercraft.tab.ChatTab;
-
 /**
  *
  * @author Paul
  */
 public interface MessageSender {
     
-    public boolean sendMessage(String message, ChatTab chatTab);
+    public boolean sendMessage(MessageEvent me);
     
 }
