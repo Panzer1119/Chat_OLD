@@ -6,6 +6,7 @@
 package de.panzercraft;
 
 import de.panzercraft.tab.ChatTab;
+import de.panzercraft.tab.ChatTab.ChatType;
 import jaddon.controller.JAddOnStandard;
 import jaddon.controller.JFrameManager;
 import jaddon.controller.StandardMethods;
@@ -44,10 +45,10 @@ public class Chat implements ActionListener, StandardMethods, WindowListener {
     //Java Swing Main Start
     public static final JFrameManager frame = new JFrameManager(PROGRAMNAME, VERSION);
     private final JAddOnStandard standard = new JAddOnStandard(PROGRAMNAME, VERSION, true, true, false, true, true);
-    private final JTabbedPane tabbedpane_chattabs = new JTabbedPane();
-    private final JPanel panel_send = new JPanel();
-    private final JTextField textfield_send = new JTextField();
-    private final JButton button_send = new JButton("Send");
+    public final JTabbedPane tabbedPane_chatTabs = new JTabbedPane();
+    public final JPanel panel_send = new JPanel();
+    public final JTextField textField_send = new JTextField();
+    public final JButton button_send = new JButton("Send");
     private final JMenuBar MB1 = new JMenuBar();
     private final JMenu M1 = new JMenu("File");
     private final JMenu M2 = new JMenu("Edit");
@@ -55,14 +56,19 @@ public class Chat implements ActionListener, StandardMethods, WindowListener {
     private final JMenuItem M1I2 = new JMenuItem("Restart");
     private final JMenuItem M2I1 = new JMenuItem("Change Language");
     
-    private final ArrayList<ChatTab> chattabs = new ArrayList<>();
-    private ChatTab chattab_active = null;
+    public final ArrayList<ChatTab> chatTabs = new ArrayList<>();
+    public ChatTab chatTab_active = null;
     
     private boolean init = false;
     
     public Chat() {
         init();
         //StaticStandard.getUpdater().start(); //FIXME TURN THIS ON
+        test();
+    }
+    
+    private void test() {
+        addChatTab("Test Tab", ChatType.LOCAL_NEW);
     }
 
     public static void main(String[] args) {
@@ -91,28 +97,35 @@ public class Chat implements ActionListener, StandardMethods, WindowListener {
         }
     }
     
+    private ChatTab addChatTab(String name, ChatType chatType) {
+        ChatTab chatTab = new ChatTab(name, chatType, this);
+        chatTabs.add(chatTab);
+        tabbedPane_chatTabs.addTab(name, chatTab);
+        return chatTab;
+    }
+    
     private void send() {
-        String textToSend = textfield_send.getText();
-        if(textToSend.isEmpty() || chattab_active == null) {
+        String textToSend = textField_send.getText();
+        if(textToSend.isEmpty() || chatTab_active == null) {
             return;
         }
-        chattab_active.sendMessage(textToSend);
+        chatTab_active.sendMessage(textToSend);
     }
     
     private void initListener() {
         M1I1.addActionListener(this);
         M1I2.addActionListener(this);
         M2I1.addActionListener(this);
-        tabbedpane_chattabs.addChangeListener(e -> {
-            int selectedIndex = tabbedpane_chattabs.getSelectedIndex();
+        tabbedPane_chatTabs.addChangeListener(e -> {
+            int selectedIndex = tabbedPane_chatTabs.getSelectedIndex();
             if(selectedIndex != -1) {
-                chattab_active = chattabs.get(selectedIndex);
+                chatTab_active = chatTabs.get(selectedIndex);
             } else {
-                chattab_active = null;
+                chatTab_active = null;
             }
         });
         button_send.addActionListener(this);
-        textfield_send.addKeyListener(new KeyListener() {
+        textField_send.addKeyListener(new KeyListener() {
             
             @Override
             public void keyTyped(KeyEvent e) {
@@ -141,11 +154,11 @@ public class Chat implements ActionListener, StandardMethods, WindowListener {
         frame.setJMenuBar(MB1);
         //addTabs();
         //initTabs();
-        textfield_send.setPreferredSize(new Dimension(500, 25));
+        textField_send.setPreferredSize(new Dimension(500, 25));
         panel_send.setLayout(new FlowLayout());
-        panel_send.add(textfield_send);
+        panel_send.add(textField_send);
         panel_send.add(button_send);
-        frame.add(tabbedpane_chattabs, BorderLayout.CENTER);
+        frame.add(tabbedPane_chatTabs, BorderLayout.CENTER);
         frame.add(panel_send, BorderLayout.SOUTH);
     }
 

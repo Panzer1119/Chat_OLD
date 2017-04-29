@@ -5,8 +5,11 @@
  */
 package de.panzercraft.tab;
 
+import de.panzercraft.Chat;
 import de.panzercraft.message.MessageReceiveListener;
+import de.panzercraft.message.MessageReceiveListenerImpl;
 import de.panzercraft.message.MessageSender;
+import de.panzercraft.message.MessageSenderImpl;
 import java.awt.BorderLayout;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -35,21 +38,48 @@ public class ChatTab extends JPanel {
         }
     }
     
+    public final Chat chat;
+    
     private ChatType chatType = ChatType.INVALID;
     
     private String tabName = "";
     private MessageReceiveListener messageReceiveListener = null;
     private MessageSender messageSender = null;
     
+    private String dateTimeFormat = "dd.MM.yyyy HH:mm:ss";
+    
     private final JTextPane textPane = new JTextPane();
     private final JScrollPane scrollPane = new JScrollPane(textPane, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     
     private boolean showOnlineUser = false;
     
-    public ChatTab(String tabName) {
+    public ChatTab(String tabName, ChatType chatType, Chat chat) {
+        this.chat = chat;
         this.tabName = tabName;
+        this.chatType = chatType;
+        textPane.setEditable(false);
         setLayout(new BorderLayout());
         add(scrollPane, BorderLayout.CENTER);
+        switch(chatType) {
+            case INVALID:
+                messageReceiveListener = null;
+                messageSender = null;
+                break;
+            case LOCAL_OLD:
+                messageReceiveListener = null;
+                messageSender = null;
+                break;
+            case LOCAL_NEW:
+                messageReceiveListener = MessageReceiveListenerImpl.messageReceiveListener_local_new;
+                messageSender = MessageSenderImpl.messageSender_local_new;
+                break;
+            case USB:
+                messageReceiveListener = null;
+                messageSender = null;
+                break;
+            default:
+                break;
+        }
     }
 
     public String getTabName() {
@@ -100,8 +130,25 @@ public class ChatTab extends JPanel {
         return this;
     }
     
+    public ChatTab addText(String text) {
+        final String text_old = textPane.getText();
+        textPane.setText(text_old + (text_old.isEmpty() ? "" : "\n") + text);
+        return this;
+    }
+    
     public ChatTab sendMessage(String message) {
-        messageSender.sendMessage(message, this);
+        if(messageSender != null) {
+            messageSender.sendMessage(message, this);
+        }
+        return this;
+    }
+
+    public String getDateTimeFormat() {
+        return dateTimeFormat;
+    }
+
+    public ChatTab setDateTimeFormat(String dateTimeFormat) {
+        this.dateTimeFormat = dateTimeFormat;
         return this;
     }
     
