@@ -1,0 +1,3 @@
+backup_manager.png	Farm Fresh FatCow	Creative Commons Attribution 3.0 United States
+backup_wizard.png	Farm Fresh FatCow	Creative Commons Attribution 3.0 United States
+backups.png		Farm Fresh FatCow	Creative Commons Attribution 3.0 United States

@@ -16,11 +16,30 @@ import javax.swing.JTextPane;
  */
 public class ChatTab extends JPanel {
     
+    public enum ChatType {
+        INVALID     ("INVALID"),
+        LOCAL_OLD   ("LOCAL_OLD"),
+        LOCAL_NEW   ("LOCAL_NEW"),
+        USB         ("USB");
+        
+        private final String name;
+        
+        ChatType(String name) {
+            this.name = name;
+        }
+        
+        public String getName() {
+            return name;
+        }
+    }
+    
+    private ChatType chatType = ChatType.INVALID;
+    
     private String tabName = "";
     private MessageReceiveListener messageReceiveListener = null;
     private MessageSender messageSender = null;
     
-    private JTextPane textPane = new JTextPane();
+    private final JTextPane textPane = new JTextPane();
     
     private boolean showOnlineUser = false;
     
@@ -32,8 +51,9 @@ public class ChatTab extends JPanel {
         return tabName;
     }
 
-    public void setTabName(String tabName) {
+    public ChatTab setTabName(String tabName) {
         this.tabName = tabName;
+        return this;
     }
 
     public MessageReceiveListener getMessageReceiveListener() {
@@ -51,6 +71,27 @@ public class ChatTab extends JPanel {
 
     public ChatTab setMessageSender(MessageSender messageSender) {
         this.messageSender = messageSender;
+        return this;
+    }
+
+    public ChatType getChatType() {
+        return chatType;
+    }
+
+    public ChatTab setChatType(ChatType chatType) {
+        this.chatType = chatType;
+        return this;
+    }
+
+    public JTextPane getTextPane() {
+        return textPane;
+    }
+    public boolean isShowOnlineUser() {
+        return showOnlineUser;
+    }
+
+    public ChatTab setShowOnlineUser(boolean showOnlineUser) {
+        this.showOnlineUser = showOnlineUser;
         return this;
     }
     
