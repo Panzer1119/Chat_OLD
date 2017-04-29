@@ -8,6 +8,7 @@ package de.panzercraft.tab;
 import de.panzercraft.message.MessageReceiveListener;
 import de.panzercraft.message.MessageSender;
 import javax.swing.JPanel;
+import javax.swing.JTextPane;
 
 /**
  *
@@ -18,6 +19,10 @@ public class ChatTab extends JPanel {
     private String tabName = "";
     private MessageReceiveListener messageReceiveListener = null;
     private MessageSender messageSender = null;
+    
+    private JTextPane textPane = new JTextPane();
+    
+    private boolean showOnlineUser = false;
     
     public ChatTab(String tabName) {
         this.tabName = tabName;
