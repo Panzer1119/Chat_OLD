@@ -7,6 +7,8 @@ package de.panzercraft;
 
 import de.panzercraft.tab.ChatTab;
 import de.panzercraft.tab.ChatTab.ChatType;
+import de.panzercraft.util.COMPort;
+import gnu.io.CommPortIdentifier;
 import jaddon.controller.JAddOnStandard;
 import jaddon.controller.JFrameManager;
 import jaddon.controller.StandardMethods;
@@ -22,10 +24,12 @@ import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import javax.swing.JButton;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
@@ -68,7 +72,7 @@ public class Chat implements ActionListener, StandardMethods, WindowListener {
     }
     
     private void test() {
-        addChatTab("Test Tab", ChatType.LOCAL_NEW);
+        addChatTab("Test Tab", ChatType.USB);
     }
 
     public static void main(String[] args) {
@@ -101,6 +105,34 @@ public class Chat implements ActionListener, StandardMethods, WindowListener {
         ChatTab chatTab = new ChatTab(name, chatType, this);
         chatTabs.add(chatTab);
         tabbedPane_chatTabs.addTab(name, chatTab);
+        switch(chatType) {
+            case INVALID:
+                break;
+            case LOCAL_OLD:
+                break;
+            case LOCAL_NEW:
+                break;
+            case USB:
+                final ArrayList<COMPort> ports = getCOMPorts(true, CommPortIdentifier.PORT_SERIAL);
+                Object input = JOptionPane.showInputDialog(frame, StaticStandard.getLang().getLang("choose_port", "Choose Port:"), StaticStandard.getLang().getLang("port_selection", "Port Selection"), JOptionPane.QUESTION_MESSAGE, null, ports.toArray(), ports.get(0));
+                if(input == null) {
+                    break;
+                }
+                if(input instanceof COMPort) {
+                    COMPort port = (COMPort) input;
+                    input = JOptionPane.showInputDialog(frame, StaticStandard.getLang().getLang("baudrate", "Baudrate:"), StaticStandard.getLang().getLang("set_baudrate", "Set Baudrate"), JOptionPane.QUESTION_MESSAGE);
+                    if(input == null) {
+                        break;
+                    }
+                    if(input instanceof String) {
+                        int baudrate = Integer.parseInt((String) input);
+                        chatTab.connect(port.getName(), baudrate);
+                    }
+                }
+                break;
+            default:
+                break;
+        }
         return chatTab;
     }
     
@@ -300,6 +332,12 @@ public class Chat implements ActionListener, StandardMethods, WindowListener {
 
     @Override
     public void exit() {
+        try {
+            for(ChatTab chatTab : chatTabs) {
+                chatTab.disconnect();
+            }
+        } catch (Exception ex) {
+        }
         while(true) {
             try {
                 System.exit(0);
@@ -338,6 +376,27 @@ public class Chat implements ActionListener, StandardMethods, WindowListener {
 
     @Override
     public void windowDeactivated(WindowEvent e) {
+    }
+    
+    public static ArrayList<COMPort> getCOMPorts(boolean whitelist, int... filter) {
+        final ArrayList<COMPort> ports = new ArrayList<>();
+        Enumeration pList = CommPortIdentifier.getPortIdentifiers();
+        while(pList.hasMoreElements()) {
+            CommPortIdentifier cpi = (CommPortIdentifier) pList.nextElement();
+            boolean allowed = !whitelist;
+            for(int f : filter) {
+                if(cpi.getPortType() == f) {
+                    allowed = whitelist;
+                    break;
+                }
+            }
+            if(!allowed) {
+                continue;
+            }
+            COMPort port = new COMPort(cpi.getName(), cpi.getCurrentOwner());
+            ports.add(port);
+        }
+        return ports;
     }
     
 }

@@ -14,14 +14,14 @@ import de.panzercraft.tab.ChatTab;
  */
 public abstract class Connector {
     
-    private final ChatTab chatTab;
+    protected final ChatTab chatTab;
     
     public Connector(ChatTab chatTab) {
         this.chatTab = chatTab;
     }
     
-    public abstract boolean connect(Object[] options);
-    public abstract boolean disconnect(Object[] options);
+    public abstract boolean connect(Object... options);
+    public abstract boolean disconnect(Object... options);
     public abstract boolean sendMessage(MessageEvent me);
     
     public String getName() {

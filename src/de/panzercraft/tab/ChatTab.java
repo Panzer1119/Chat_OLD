@@ -25,6 +25,9 @@ import javax.swing.JTextPane;
  */
 public class ChatTab extends JPanel {
     
+    public static final String UNKNOWNSOURCE = "Unknown";
+    public static final String LINEENDCHAR = "\n";
+    
     public enum ChatType {
         INVALID     ("INVALID"),
         LOCAL_OLD   ("LOCAL_OLD"),
@@ -145,8 +148,26 @@ public class ChatTab extends JPanel {
     
     public ChatTab addText(String text) {
         final String text_old = textPane.getText();
-        textPane.setText(text_old + (text_old.isEmpty() ? "" : "\n") + text);
+        StaticStandard.logErr("ADDTEXT:" + text);
+        if(text.endsWith(LINEENDCHAR)) {
+            text = text.substring(0, text.length() - LINEENDCHAR.length() - 1);
+        }
+        textPane.setText(text_old + (text_old.isEmpty() ? "" : LINEENDCHAR) + text);
         return this;
+    }
+    
+    public boolean connect(Object... options) {
+        if(connector == null) {
+            return false;
+        }
+        return connector.connect(options);
+    }
+    
+    public boolean disconnect(Object... options) {
+        if(connector == null) {
+            return false;
+        }
+        return connector.disconnect(options);
     }
     
     public ChatTab sendMessage(String message) {
@@ -160,16 +181,22 @@ public class ChatTab extends JPanel {
     
     public ChatTab receiveMessage(MessageEvent me) {
         try {
-            final ChatTab chatTab =  me.getChatTab();
             final String message = me.getMessage();
-            final String source = chatTab.getUsername();
+            Object source = me.getSource();
             final Instant timestamp = me.getTimestamp();
+            if(source == null) {
+                source = UNKNOWNSOURCE;
+            } else if(source instanceof ChatTab) {
+                source = ((ChatTab) source).getUsername();
+            } else {
+                source = source.toString();
+            }
             String timestamp_formatted = "";
-            if(timestamp != null && chatTab.isShowTimestamp()) {
-                timestamp_formatted = String.format("[%s] ", Utils.formatInstant(timestamp, chatTab.getDateTimeFormat()));
+            if(timestamp != null && isShowTimestamp()) {
+                timestamp_formatted = String.format("[%s] ", Utils.formatInstant(timestamp, getDateTimeFormat()));
             }
             final String message_complete = String.format("%s%s: %s", timestamp_formatted, source, message);
-            chatTab.addText(message_complete);
+            addText(message_complete);
             messages_received.add(me);
         } catch (Exception ex) {
             StaticStandard.logErr("Error while receiving message: " + ex, ex);
@@ -179,12 +206,11 @@ public class ChatTab extends JPanel {
     
     public Thread reloadReceivedMessages() {
         clearText();
-        Runnable run = () -> {
+        return StaticStandard.execute(() -> {
             for(MessageEvent me : messages_received) {
                 receiveMessage(me);
             }
-        };
-        return StaticStandard.execute(run);
+        });
     }
     
     public ChatTab clearText() {

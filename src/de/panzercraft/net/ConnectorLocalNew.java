@@ -23,13 +23,13 @@ public class ConnectorLocalNew extends Connector {
     }
     
     @Override
-    public boolean connect(Object[] options) {
+    public boolean connect(Object... options) {
         
         return true;
     }
 
     @Override
-    public boolean disconnect(Object[] options) {
+    public boolean disconnect(Object... options) {
         
         return true;
     }

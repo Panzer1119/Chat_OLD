@@ -15,12 +15,12 @@ import java.time.Instant;
 public class MessageEvent {
     
     private final String message;
-    private final ChatTab chatTab;
+    private final Object source;
     private final Instant timestamp;
     
-    public MessageEvent(String message, ChatTab chatTab, Instant timestamp) {
+    public MessageEvent(String message, Object source, Instant timestamp) {
         this.message = message;
-        this.chatTab = chatTab;
+        this.source = source;
         this.timestamp = timestamp;
     }
 
@@ -28,8 +28,8 @@ public class MessageEvent {
         return message;
     }
     
-    public ChatTab getChatTab() {
-        return chatTab;
+    public Object getSource() {
+        return source;
     }
     
     public Instant getTimestamp() {
