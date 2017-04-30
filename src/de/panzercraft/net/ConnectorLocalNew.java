@@ -16,7 +16,7 @@ public class ConnectorLocalNew extends Connector {
     public ConnectorLocalNew(ChatTab chatTab) {
         super(chatTab);
     }
-
+    
     @Override
     public boolean connect(Object[] options) {
         
