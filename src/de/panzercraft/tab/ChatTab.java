@@ -7,11 +7,10 @@ package de.panzercraft.tab;
 
 import de.panzercraft.Chat;
 import de.panzercraft.message.MessageEvent;
-import de.panzercraft.message.MessageReceiveListener;
-import de.panzercraft.message.MessageReceiveListenerImpl;
-import de.panzercraft.message.MessageSender;
-import de.panzercraft.message.MessageSenderImpl;
 import de.panzercraft.net.Connector;
+import de.panzercraft.net.ConnectorLocalNew;
+import de.panzercraft.net.ConnectorUSB;
+import de.panzercraft.util.Utils;
 import jaddon.controller.StaticStandard;
 import java.awt.BorderLayout;
 import java.time.Instant;
@@ -52,8 +51,6 @@ public class ChatTab extends JPanel {
     
     private String tabName = "";
     private String username = System.getProperty("user.name");
-    private MessageReceiveListener messageReceiveListener = null;
-    private MessageSender messageSender = null;
     private Connector connector = null;
     
     private String dateTimeFormat = "dd.MM.yyyy HH:mm:ss";
@@ -73,20 +70,16 @@ public class ChatTab extends JPanel {
         add(scrollPane, BorderLayout.CENTER);
         switch(chatType) {
             case INVALID:
-                messageReceiveListener = null;
-                messageSender = null;
+                connector = null;
                 break;
             case LOCAL_OLD:
-                messageReceiveListener = null;
-                messageSender = null;
+                connector = null;
                 break;
             case LOCAL_NEW:
-                messageReceiveListener = MessageReceiveListenerImpl.messageReceiveListener_local_new;
-                messageSender = MessageSenderImpl.messageSender_echo;
+                connector = ConnectorLocalNew.getInstance(this);
                 break;
             case USB:
-                messageReceiveListener = null;
-                messageSender = null;
+                connector = ConnectorUSB.getInstance(this);
                 break;
             default:
                 break;
@@ -117,24 +110,6 @@ public class ChatTab extends JPanel {
 
     public ChatTab setUsername(String username) {
         this.username = username;
-        return this;
-    }
-    
-    public MessageReceiveListener getMessageReceiveListener() {
-        return messageReceiveListener;
-    }
-
-    public ChatTab setMessageReceiveListener(MessageReceiveListener messageReceiveListener) {
-        this.messageReceiveListener = messageReceiveListener;
-        return this;
-    }
-
-    public MessageSender getMessageSender() {
-        return messageSender;
-    }
-
-    public ChatTab setMessageSender(MessageSender messageSender) {
-        this.messageSender = messageSender;
         return this;
     }
 
@@ -175,30 +150,38 @@ public class ChatTab extends JPanel {
     }
     
     public ChatTab sendMessage(String message) {
-        if(messageSender != null) {
+        if(connector != null) {
             MessageEvent me = new MessageEvent(message, this, Instant.now());
-            messageSender.sendMessage(me);
+            connector.sendMessage(me);
             messages_sent.add(me);
         }
         return this;
     }
     
     public ChatTab receiveMessage(MessageEvent me) {
-        if(messageReceiveListener != null) {
-            messageReceiveListener.messageReceived(me);
+        try {
+            final ChatTab chatTab =  me.getChatTab();
+            final String message = me.getMessage();
+            final String source = chatTab.getUsername();
+            final Instant timestamp = me.getTimestamp();
+            String timestamp_formatted = "";
+            if(timestamp != null && chatTab.isShowTimestamp()) {
+                timestamp_formatted = String.format("[%s] ", Utils.formatInstant(timestamp, chatTab.getDateTimeFormat()));
+            }
+            final String message_complete = String.format("%s%s: %s", timestamp_formatted, source, message);
+            chatTab.addText(message_complete);
             messages_received.add(me);
+        } catch (Exception ex) {
+            StaticStandard.logErr("Error while receiving message: " + ex, ex);
         }
         return this;
     }
     
     public Thread reloadReceivedMessages() {
-        if(messageReceiveListener == null) {
-            return null;
-        }
         clearText();
         Runnable run = () -> {
             for(MessageEvent me : messages_received) {
-                messageReceiveListener.messageReceived(me);
+                receiveMessage(me);
             }
         };
         return StaticStandard.execute(run);

@@ -5,6 +5,7 @@
  */
 package de.panzercraft.net;
 
+import de.panzercraft.message.MessageEvent;
 import de.panzercraft.tab.ChatTab;
 import jaddon.controller.StaticStandard;
 import java.net.URI;
@@ -18,6 +19,10 @@ import org.ardulink.util.URIs;
  */
 public class ConnectorUSB extends Connector {
     
+    public static Connector getInstance(ChatTab chatTab) {
+        return new ConnectorUSB(chatTab);
+    }
+
     private Link link = null;
     private URI uri = null;
     private String port = "COM3";
@@ -77,6 +82,11 @@ public class ConnectorUSB extends Connector {
     
     public static URI getURI(String port, int baudrate, boolean pingprobe, int waitsecs) {
         return URIs.newURI(String.format("ardulink://serial-jssc-custom?port=%s&baudrate=%d&pingprobe=%b&waitsecs=%d", port, baudrate, pingprobe, waitsecs));
+    }
+    
+    @Override
+    public boolean sendMessage(MessageEvent me) {
+        return false;
     }
 
 }

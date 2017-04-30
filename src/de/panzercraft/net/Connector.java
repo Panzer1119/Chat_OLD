@@ -5,6 +5,7 @@
  */
 package de.panzercraft.net;
 
+import de.panzercraft.message.MessageEvent;
 import de.panzercraft.tab.ChatTab;
 
 /**
@@ -21,6 +22,7 @@ public abstract class Connector {
     
     public abstract boolean connect(Object[] options);
     public abstract boolean disconnect(Object[] options);
+    public abstract boolean sendMessage(MessageEvent me);
     
     public String getName() {
         return getClass().getSimpleName();

@@ -5,6 +5,7 @@
  */
 package de.panzercraft.net;
 
+import de.panzercraft.message.MessageEvent;
 import de.panzercraft.tab.ChatTab;
 
 /**
@@ -13,6 +14,10 @@ import de.panzercraft.tab.ChatTab;
  */
 public class ConnectorLocalNew extends Connector {
 
+    public static Connector getInstance(ChatTab chatTab) {
+        return new ConnectorLocalNew(chatTab);
+    }
+    
     public ConnectorLocalNew(ChatTab chatTab) {
         super(chatTab);
     }
@@ -27,6 +32,11 @@ public class ConnectorLocalNew extends Connector {
     public boolean disconnect(Object[] options) {
         
         return true;
+    }
+
+    @Override
+    public boolean sendMessage(MessageEvent me) {
+        return false;
     }
     
 }
