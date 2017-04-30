@@ -138,6 +138,15 @@ public class ChatTab extends JPanel {
         return this;
     }
 
+    public Connector getConnector() {
+        return connector;
+    }
+
+    public ChatTab setConnector(Connector connector) {
+        this.connector = connector;
+        return this;
+    }
+
     public ChatType getChatType() {
         return chatType;
     }
