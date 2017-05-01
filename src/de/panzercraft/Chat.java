@@ -7,8 +7,6 @@ package de.panzercraft;
 
 import de.panzercraft.tab.ChatTab;
 import de.panzercraft.tab.ChatTab.ChatType;
-import de.panzercraft.util.COMPort;
-import gnu.io.CommPortIdentifier;
 import jaddon.controller.JAddOnStandard;
 import jaddon.controller.JFrameManager;
 import jaddon.controller.StandardMethods;
@@ -24,7 +22,6 @@ import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import javax.swing.JButton;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -103,10 +100,26 @@ public class Chat implements ActionListener, StandardMethods, WindowListener {
     
     private ChatTab addChatTab(String name, ChatType chatType) {
         ChatTab chatTab = new ChatTab(name, chatType, this);
+        chatTab_active = chatTab;
         chatTabs.add(chatTab);
         tabbedPane_chatTabs.addTab(name, chatTab);
-        chatTab.connect();
+        updateChatTabs();
+        boolean done = chatTab.connect(); //FIXME IN THREAD MACHEN?!
+        if(done) {
+            chatTab.setChatEnabled(true);
+            JOptionPane.showMessageDialog(frame, "Connection successfully established!", "Chat Connection", JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            chatTab.setChatEnabled(false);
+            JOptionPane.showMessageDialog(frame, "Connection not successfully established!", "Chat Connection", JOptionPane.INFORMATION_MESSAGE);
+        }
         return chatTab;
+    }
+    
+    public void updateChatTabs() {
+        if(chatTab_active != null) {
+            textField_send.setEnabled(chatTab_active.isChatEnabled());
+            button_send.setEnabled(chatTab_active.isChatEnabled());
+        }
     }
     
     private void send() {

@@ -12,6 +12,7 @@ import de.panzercraft.util.COMPort;
 import gnu.io.CommPortIdentifier;
 import jaddon.controller.StaticStandard;
 import java.net.URI;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -27,8 +28,10 @@ import org.ardulink.util.URIs;
 public class ConnectorUSB extends Connector {
     
     public static final String USERSPLITSTRING = "/";
+    public static final Duration MAXDURATION = Duration.ofSeconds(10);
     
     public enum Key {
+        CONNECT     ("C/ONNECT"),
         DISCONNECT  ("DISC/ONNECT"),
         STARTED     ("setup");
         
@@ -53,6 +56,9 @@ public class ConnectorUSB extends Connector {
     private int baudrate = 9600;
     private boolean pingprobe = false;
     private int waitsecs = 1;
+    
+    private boolean connected_arduino = false;
+    private boolean connected_partner = false;
 
     public ConnectorUSB(ChatTab chatTab) {
         super(chatTab);
@@ -87,6 +93,10 @@ public class ConnectorUSB extends Connector {
         } else {
             return false;
         }
+        return waitForConnect();
+    }
+    
+    private boolean waitForConnect() {
         try {
             uri = getURI(port, baudrate, pingprobe, waitsecs);
             link = Links.getLink(uri);
@@ -96,31 +106,51 @@ public class ConnectorUSB extends Connector {
                         if(e.getMessage() == null || e.getMessage().isEmpty()) {
                             return;
                         }
-                        StaticStandard.logErr("NEWMESSAGE:" + e.getMessage());
-                        final MessageEvent me = convertFromArduino(e.getMessage(), Instant.now());
-                        if(e.getMessage().equals(Key.DISCONNECT.getKey())) {
-                            StaticStandard.log("Disconnected");
+                        String message = e.getMessage();
+                        if(message.getBytes()[message.length() - 1] == new byte[]{13}[0]) {
+                            message = message.substring(0, message.length() - 1);
+                        }
+                        final MessageEvent me = convertFromArduino(message, Instant.now());
+                        if(message.equals(Key.CONNECT.getKey())) {
+                            connected_partner = true;
+                            StaticStandard.log("Connected to Partner");
+                        } else if(message.equals(Key.DISCONNECT.getKey())) {
+                            connected_partner = false;
+                            StaticStandard.log("Disconnected from Partner");
                             disconnect();
-                        } else if(me.getMessage().equalsIgnoreCase(Key.STARTED.getKey())) {
-                            StaticStandard.log("Connected");
+                        } else if(message.equals(Key.STARTED.getKey())) {
+                            connected_arduino = true;
+                            StaticStandard.log("Connected to Arduino");
                         } else {
-                            //chatTab.receiveMessage(me);
+                            chatTab.receiveMessage(me);
                         }
                     } catch (Exception ex) {
                         StaticStandard.logErr("Error while receiving message: " + ex, ex);
                     }
                 //});
             });
+            sendRawMessage(Key.CONNECT.getKey());
+            Thread.sleep(100);
+            sendRawMessage(Key.CONNECT.getKey());
+            Thread.sleep(100);
+            Instant instant_started = Instant.now();
+            while(!(connected_arduino && connected_partner) && Duration.between(instant_started, Instant.now()).compareTo(MAXDURATION) < 0) {
+                try {
+                    Thread.sleep(100);
+                } catch (Exception ex) {
+                }
+            }
         } catch (Exception ex) {
             StaticStandard.logErr("Error while connecting to " + port + ": " + ex, ex);
         }
-        return link != null;
+        return connected_arduino;
     }
 
     @Override
     public boolean disconnect() {
         sendRawMessage(Key.DISCONNECT.getKey());
         link = null;
+        connected_partner = false;
         try {
             Thread.sleep(500);
         } catch (Exception ex) {
@@ -145,7 +175,6 @@ public class ConnectorUSB extends Connector {
     @Override
     public boolean sendMessage(MessageEvent me) {
         String mm = convertToArduino(me);
-        StaticStandard.log(mm);
         boolean done = sendRawMessage(mm);
         if(done) {
             chatTab.receiveMessage(me);
@@ -157,7 +186,13 @@ public class ConnectorUSB extends Connector {
     public static String convertToArduino(MessageEvent me) {
         try {
             String message = "";
-            message += ((ChatTab) me.getSource()).getUsername();
+            if(me.getSource() != null) {
+                if(me.getSource() instanceof ChatTab) {
+                    message += ((ChatTab) me.getSource()).getUsername();
+                } else {
+                    message += me.getSource().toString();
+                }
+            }
             message += USERSPLITSTRING;
             message += me.getMessage();
             return message;
@@ -169,8 +204,8 @@ public class ConnectorUSB extends Connector {
     
     public static MessageEvent convertFromArduino(String text, Instant timestamp) {
         try {
-            String message = text.substring(0, text.indexOf(USERSPLITSTRING));
-            String source = text.substring(text.indexOf(USERSPLITSTRING) + USERSPLITSTRING.length());
+            String source = text.substring(0, text.indexOf(USERSPLITSTRING));
+            String message = text.substring(text.indexOf(USERSPLITSTRING) + USERSPLITSTRING.length());
             return new MessageEvent(message, source, timestamp);
         } catch (Exception ex) {
             //StaticStandard.logErr("Error while converting from Arduino: " + ex, ex);

@@ -63,12 +63,14 @@ public class ChatTab extends JPanel {
     
     private boolean showTimestamp = false;
     private boolean showOnlineUser = false;
+    private boolean enabled = false;
     
     public ChatTab(String tabName, ChatType chatType, Chat chat) {
         this.chat = chat;
         this.tabName = tabName;
         this.chatType = chatType;
         textPane.setEditable(false);
+        setChatEnabled(false);
         setLayout(new BorderLayout());
         add(scrollPane, BorderLayout.CENTER);
         switch(chatType) {
@@ -115,6 +117,17 @@ public class ChatTab extends JPanel {
         this.username = username;
         return this;
     }
+    
+    public boolean isChatEnabled() {
+        return enabled;
+    }
+    
+    public ChatTab setChatEnabled(boolean enabled) {
+        this.enabled = enabled;
+        textPane.setEnabled(enabled);
+        chat.updateChatTabs();
+        return this;
+    }
 
     public Connector getConnector() {
         return connector;
@@ -148,7 +161,6 @@ public class ChatTab extends JPanel {
     
     public ChatTab addText(String text) {
         final String text_old = textPane.getText();
-        StaticStandard.logErr("ADDTEXT:" + text);
         if(text.endsWith(LINEENDCHAR)) {
             text = text.substring(0, text.length() - LINEENDCHAR.length() - 1);
         }

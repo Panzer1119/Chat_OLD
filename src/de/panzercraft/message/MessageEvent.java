@@ -5,7 +5,6 @@
  */
 package de.panzercraft.message;
 
-import de.panzercraft.tab.ChatTab;
 import java.time.Instant;
 
 /**
@@ -34,6 +33,11 @@ public class MessageEvent {
     
     public Instant getTimestamp() {
         return timestamp;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s%s: %s", timestamp, source, message);
     }
     
 }
