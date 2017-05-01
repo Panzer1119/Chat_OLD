@@ -135,7 +135,7 @@ public class ConnectorUSB extends Connector {
             sendRawMessage(Key.CONNECT.getKey());
             Thread.sleep(100);
             Instant instant_started = Instant.now();
-            while(!(connected_arduino && connected_partner) && Duration.between(instant_started, Instant.now()).compareTo(MAXDURATION) < 0) {
+            while(!isConnected() && Duration.between(instant_started, Instant.now()).compareTo(MAXDURATION) < 0) {
                 try {
                     Thread.sleep(100);
                 } catch (Exception ex) {
@@ -144,12 +144,12 @@ public class ConnectorUSB extends Connector {
         } catch (Exception ex) {
             StaticStandard.logErr("Error while connecting to " + port + ": " + ex, ex);
         }
-        return connected_arduino && connected_partner;
+        return isConnected();
     }
 
     @Override
     public boolean disconnect() {
-        if(!(connected_arduino && connected_partner)) {
+        if(!isConnected()) {
             return false;
         }
         sendRawMessage(Key.DISCONNECT.getKey());
@@ -166,6 +166,10 @@ public class ConnectorUSB extends Connector {
         return URIs.newURI(String.format("ardulink://serial-jssc-custom?port=%s&baudrate=%d&pingprobe=%b&waitsecs=%d", port, baudrate, pingprobe, waitsecs));
     }
     
+    public boolean isConnected() {
+        return connected_arduino && connected_partner;
+    }
+    
     private boolean sendRawMessage(String message) {
         try {
             link.sendCustomMessage(message);
@@ -178,6 +182,9 @@ public class ConnectorUSB extends Connector {
     
     @Override
     public boolean sendMessage(Message m) {
+        if(!isConnected()) {
+            return false;
+        }
         String mm = convertToArduino(m);
         boolean done = sendRawMessage(mm);
         if(done) {
@@ -233,5 +240,5 @@ public class ConnectorUSB extends Connector {
         }
         return ports;
     }
-
+    
 }
