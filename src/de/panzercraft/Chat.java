@@ -22,6 +22,7 @@ import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.ArrayList;
+import java.util.Random;
 import javax.swing.JButton;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -42,6 +43,8 @@ public class Chat implements ActionListener, StandardMethods, WindowListener {
     public static final String VERSION = "2.0";
     
     public static final String ICONMAIN = "/de/panzercraft/icons/chat-2-icon_32x32.png";
+    
+    public static final Random RANDOM = new Random();
     
     //Java Swing Main Start
     public static final JFrameManager frame = new JFrameManager(PROGRAMNAME, VERSION);

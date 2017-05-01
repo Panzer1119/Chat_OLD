@@ -5,6 +5,7 @@
  */
 package de.panzercraft.message;
 
+import de.panzercraft.chat.User;
 import java.time.Instant;
 
 /**
@@ -13,7 +14,7 @@ import java.time.Instant;
  */
 public class MessageHyperlink extends Message {
     
-    public MessageHyperlink(String message, Object source, Instant timestamp) {
+    public MessageHyperlink(String message, User source, Instant timestamp) {
         super(message, source, timestamp);
     }
     

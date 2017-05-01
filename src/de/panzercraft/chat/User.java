@@ -29,16 +29,32 @@ public class User {
         return username;
     }
 
-    public void setUsername(String username) {
+    public User setUsername(String username) {
         this.username = username;
+        return this;
     }
 
     public Color getColor() {
         return color;
     }
 
-    public void setColor(Color color) {
+    public User setColor(Color color) {
         this.color = color;
+        return this;
+    }
+    
+    @Override
+    public String toString() {
+        return username;
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+        if(o instanceof User) {
+            return ((User) o).toString().equals(toString());
+        } else {
+            return false;
+        }
     }
     
 }

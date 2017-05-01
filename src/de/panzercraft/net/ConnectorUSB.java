@@ -8,6 +8,7 @@ package de.panzercraft.net;
 import de.panzercraft.Chat;
 import de.panzercraft.message.Message;
 import de.panzercraft.chat.ChatTab;
+import de.panzercraft.chat.User;
 import de.panzercraft.util.COMPort;
 import gnu.io.CommPortIdentifier;
 import jaddon.controller.StaticStandard;
@@ -110,7 +111,7 @@ public class ConnectorUSB extends Connector {
                         if(message.getBytes()[message.length() - 1] == new byte[]{13}[0]) {
                             message = message.substring(0, message.length() - 1);
                         }
-                        final Message m = convertFromArduino(message, Instant.now());
+                        final Message m = convertFromArduino(message, Instant.now(), chatTab);
                         if(message.equals(Key.CONNECT.getKey())) {
                             connected_partner = true;
                             StaticStandard.log("Connected to Partner");
@@ -190,11 +191,7 @@ public class ConnectorUSB extends Connector {
         try {
             String message = "";
             if(m.getSource() != null) {
-                if(m.getSource() instanceof ChatTab) {
-                    message += ((ChatTab) m.getSource()).getUsername();
-                } else {
-                    message += m.getSource().toString();
-                }
+                message += m.getSource().toString();
             }
             message += USERSPLITSTRING;
             message += m.getMessage();
@@ -205,11 +202,11 @@ public class ConnectorUSB extends Connector {
         }
     }
     
-    public static Message convertFromArduino(String text, Instant timestamp) {
+    public static Message convertFromArduino(String text, Instant timestamp, ChatTab chatTab) {
         try {
             String source = text.substring(0, text.indexOf(USERSPLITSTRING));
             String message = text.substring(text.indexOf(USERSPLITSTRING) + USERSPLITSTRING.length());
-            return new Message(message, source, timestamp);
+            return new Message(message, chatTab.getUserByName(source, true), timestamp);
         } catch (Exception ex) {
             //StaticStandard.logErr("Error while converting from Arduino: " + ex, ex);
             return new Message(text, null, timestamp);

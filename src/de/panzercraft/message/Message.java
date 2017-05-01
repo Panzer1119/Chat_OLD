@@ -6,6 +6,7 @@
 package de.panzercraft.message;
 
 import de.panzercraft.chat.ChatTab;
+import de.panzercraft.chat.User;
 import de.panzercraft.util.Utils;
 import jaddon.controller.StaticStandard;
 import java.io.Serializable;
@@ -18,10 +19,10 @@ import java.time.Instant;
 public class Message implements Serializable {
     
     private final String message;
-    private final Object source;
+    private final User source;
     private final Instant timestamp;
     
-    public Message(String message, Object source, Instant timestamp) {
+    public Message(String message, User source, Instant timestamp) {
         this.message = message;
         this.source = source;
         this.timestamp = timestamp;
@@ -31,7 +32,7 @@ public class Message implements Serializable {
         return message;
     }
     
-    public Object getSource() {
+    public User getSource() {
         return source;
     }
     
@@ -48,8 +49,6 @@ public class Message implements Serializable {
         String user = "";
         if(source == null) {
             user = getUnknownUsername();
-        } else if(source instanceof ChatTab) {
-            user = ((ChatTab) source).getUsername();
         } else {
             user = source.toString();
         }
@@ -64,11 +63,7 @@ public class Message implements Serializable {
         if(source == null) {
             return getUnknownUsername();
         } else {
-            if(source instanceof ChatTab) {
-                return ((ChatTab) source).getUsername();
-            } else {
-                return source.toString();
-            }
+            return source.toString();
         }
     }
     

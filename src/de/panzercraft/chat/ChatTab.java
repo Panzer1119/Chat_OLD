@@ -7,17 +7,16 @@ package de.panzercraft.chat;
 
 import de.panzercraft.Chat;
 import de.panzercraft.message.Message;
-import static de.panzercraft.message.Message.getUnknownUsername;
 import de.panzercraft.message.MessageHyperlink;
 import de.panzercraft.net.Connector;
 import de.panzercraft.net.ConnectorLocalNew;
 import de.panzercraft.net.ConnectorUSB;
-import de.panzercraft.util.Utils;
 import jaddon.controller.StaticStandard;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Random;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
@@ -54,11 +53,12 @@ public class ChatTab extends JPanel {
     
     private ChatType chatType = ChatType.INVALID;
     
+    private final ArrayList<User> users_connected = new ArrayList<>();
     private final ArrayList<Message> messages_received = new ArrayList<>();
     private final ArrayList<Message> messages_sent = new ArrayList<>();
     
+    private final User user = new User(System.getProperty("user.name"), null);
     private String tabName = "";
-    private String username = System.getProperty("user.name");
     private Connector connector = null;
     
     private String dateTimeFormat = "dd.MM.yyyy HH:mm:ss";
@@ -120,13 +120,8 @@ public class ChatTab extends JPanel {
         return this;
     }
 
-    public String getUsername() {
-        return username;
-    }
-
-    public ChatTab setUsername(String username) {
-        this.username = username;
-        return this;
+    public User getUser() {
+        return user;
     }
     
     public boolean isChatEnabled() {
@@ -195,7 +190,7 @@ public class ChatTab extends JPanel {
     
     public ChatTab sendMessage(String message) {
         if(connector != null) {
-            Message m = new Message(message, this, Instant.now());
+            Message m = new Message(message, user, Instant.now());
             connector.sendMessage(m);
             messages_sent.add(m);
         }
@@ -218,21 +213,21 @@ public class ChatTab extends JPanel {
         }
         boolean isHyperlink = m instanceof MessageHyperlink;
         boolean knownUsername = false;
-        String source = m.toUsername();
-        if(source.equals(username)) {
-            StyleConstants.setAlignment(style, StyleConstants.ALIGN_LEFT); //Eigentlich ALIGN_RIGHT
-            StyleConstants.setBackground(style, Color.YELLOW);
-            StyleConstants.setForeground(style, Color.BLACK);
-            knownUsername = true;
-        } else {
-            /*
-            if(onlineusers.getColors().get(name) != null) {
-                StyleConstants.setAlignment(style, StyleConstants.ALIGN_LEFT); //Eigentlich ALIGN_LEFT
-                StyleConstants.setBackground(style, Color.WHITE);
-                StyleConstants.setForeground(style, onlineusers.getColors().get(name));
+        User user_from = m.getSource();
+        if(user_from != null) {
+            if(user_from.equals(user)) {
+                StyleConstants.setAlignment(style, StyleConstants.ALIGN_LEFT); //Eigentlich ALIGN_RIGHT
+                StyleConstants.setBackground(style, Color.YELLOW);
+                StyleConstants.setForeground(style, Color.BLACK);
                 knownUsername = true;
+            } else {
+                if(user_from.getColor() != null) {
+                    StyleConstants.setAlignment(style, StyleConstants.ALIGN_LEFT); //Eigentlich ALIGN_LEFT
+                    StyleConstants.setBackground(style, Color.WHITE);
+                    StyleConstants.setForeground(style, user_from.getColor());
+                    knownUsername = true;
+                }
             }
-            */
         }
         if(!knownUsername) {
             StyleConstants.setAlignment(style, StyleConstants.ALIGN_LEFT);
@@ -312,6 +307,25 @@ public class ChatTab extends JPanel {
     public ChatTab setDateTimeFormat(String dateTimeFormat) {
         this.dateTimeFormat = dateTimeFormat;
         return this;
+    }
+    
+    public User getUserByName(String username, boolean createNew) {
+        for(User u : users_connected) {
+            if(u.toString().equals(username)) {
+                return u;
+            }
+        }
+        if(createNew) {
+            User u = new User(username, getRandomColor());
+            users_connected.add(u);
+            return u;
+        } else {
+            return null;
+        }
+    }
+    
+    public static Color getRandomColor() {
+        return new Color(Chat.RANDOM.nextInt(200), Chat.RANDOM.nextInt(200), Chat.RANDOM.nextInt(200));
     }
     
 }
