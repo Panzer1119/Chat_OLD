@@ -209,7 +209,7 @@ public class ConnectorUSB extends Connector {
             return new Message(message, chatTab.getUserByName(source, true), timestamp);
         } catch (Exception ex) {
             //StaticStandard.logErr("Error while converting from Arduino: " + ex, ex);
-            return new Message(text, null, timestamp);
+            return new Message(text, chatTab.getUser(), timestamp);
         }
     }
     
