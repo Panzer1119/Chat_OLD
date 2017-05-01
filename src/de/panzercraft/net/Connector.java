@@ -5,8 +5,8 @@
  */
 package de.panzercraft.net;
 
-import de.panzercraft.message.MessageEvent;
-import de.panzercraft.tab.ChatTab;
+import de.panzercraft.message.Message;
+import de.panzercraft.chat.ChatTab;
 
 /**
  *
@@ -22,7 +22,7 @@ public abstract class Connector {
     
     public abstract boolean connect();
     public abstract boolean disconnect();
-    public abstract boolean sendMessage(MessageEvent me);
+    public abstract boolean sendMessage(Message m);
     
     public String getName() {
         return getClass().getSimpleName();

@@ -5,8 +5,8 @@
  */
 package de.panzercraft;
 
-import de.panzercraft.tab.ChatTab;
-import de.panzercraft.tab.ChatTab.ChatType;
+import de.panzercraft.chat.ChatTab;
+import de.panzercraft.chat.ChatTab.ChatType;
 import jaddon.controller.JAddOnStandard;
 import jaddon.controller.JFrameManager;
 import jaddon.controller.StandardMethods;
@@ -41,7 +41,7 @@ public class Chat implements ActionListener, StandardMethods, WindowListener {
     public static final String PROGRAMNAME = "Chat";
     public static final String VERSION = "2.0";
     
-    public static final String ICONMAIN = "/de/panzercraft/icons/backup_manager.png";
+    public static final String ICONMAIN = "/de/panzercraft/icons/chat-2-icon_32x32.png";
     
     //Java Swing Main Start
     public static final JFrameManager frame = new JFrameManager(PROGRAMNAME, VERSION);

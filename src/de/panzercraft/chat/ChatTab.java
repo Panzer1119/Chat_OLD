@@ -3,21 +3,27 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package de.panzercraft.tab;
+package de.panzercraft.chat;
 
 import de.panzercraft.Chat;
-import de.panzercraft.message.MessageEvent;
+import de.panzercraft.message.Message;
+import static de.panzercraft.message.Message.getUnknownUsername;
+import de.panzercraft.message.MessageHyperlink;
 import de.panzercraft.net.Connector;
 import de.panzercraft.net.ConnectorLocalNew;
 import de.panzercraft.net.ConnectorUSB;
 import de.panzercraft.util.Utils;
 import jaddon.controller.StaticStandard;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.time.Instant;
 import java.util.ArrayList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
+import javax.swing.text.Style;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 
 /**
  *
@@ -25,7 +31,6 @@ import javax.swing.JTextPane;
  */
 public class ChatTab extends JPanel {
     
-    public static final String UNKNOWNSOURCE = "Unknown";
     public static final String LINEENDCHAR = "\n";
     
     public enum ChatType {
@@ -49,8 +54,8 @@ public class ChatTab extends JPanel {
     
     private ChatType chatType = ChatType.INVALID;
     
-    private final ArrayList<MessageEvent> messages_received = new ArrayList<>();
-    private final ArrayList<MessageEvent> messages_sent = new ArrayList<>();
+    private final ArrayList<Message> messages_received = new ArrayList<>();
+    private final ArrayList<Message> messages_sent = new ArrayList<>();
     
     private String tabName = "";
     private String username = System.getProperty("user.name");
@@ -60,6 +65,8 @@ public class ChatTab extends JPanel {
     
     private final JTextPane textPane = new JTextPane();
     private final JScrollPane scrollPane = new JScrollPane(textPane, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    private final StyledDocument doc = textPane.getStyledDocument();
+    private final Style style = textPane.addStyle("Style", null);
     
     private boolean showTimestamp = false;
     private boolean showOnlineUser = false;
@@ -89,6 +96,10 @@ public class ChatTab extends JPanel {
             default:
                 break;
         }
+        clearText();
+        StyleConstants.setBackground(style, Color.WHITE);
+        StyleConstants.setForeground(style, Color.BLACK);
+        StyleConstants.setAlignment(style, StyleConstants.ALIGN_LEFT);
     }
 
     public String getTabName() {
@@ -184,49 +195,113 @@ public class ChatTab extends JPanel {
     
     public ChatTab sendMessage(String message) {
         if(connector != null) {
-            MessageEvent me = new MessageEvent(message, this, Instant.now());
-            connector.sendMessage(me);
-            messages_sent.add(me);
+            Message m = new Message(message, this, Instant.now());
+            connector.sendMessage(m);
+            messages_sent.add(m);
         }
         return this;
     }
     
-    public ChatTab receiveMessage(MessageEvent me) {
+    public ChatTab receiveMessage(Message m) {
         try {
-            final String message = me.getMessage();
-            Object source = me.getSource();
-            final Instant timestamp = me.getTimestamp();
-            if(source == null) {
-                source = UNKNOWNSOURCE;
-            } else if(source instanceof ChatTab) {
-                source = ((ChatTab) source).getUsername();
-            } else {
-                source = source.toString();
-            }
-            String timestamp_formatted = "";
-            if(timestamp != null && isShowTimestamp()) {
-                timestamp_formatted = String.format("[%s] ", Utils.formatInstant(timestamp, getDateTimeFormat()));
-            }
-            final String message_complete = String.format("%s%s: %s", timestamp_formatted, source, message);
-            addText(message_complete);
-            messages_received.add(me);
+            messages_received.add(m);
+            addMessage(m);
         } catch (Exception ex) {
             StaticStandard.logErr("Error while receiving message: " + ex, ex);
         }
         return this;
     }
     
+    private void addMessage(Message m) {
+        if(m == null) {
+            return;
+        }
+        boolean isHyperlink = m instanceof MessageHyperlink;
+        boolean knownUsername = false;
+        String source = m.toUsername();
+        if(source.equals(username)) {
+            StyleConstants.setAlignment(style, StyleConstants.ALIGN_LEFT); //Eigentlich ALIGN_RIGHT
+            StyleConstants.setBackground(style, Color.YELLOW);
+            StyleConstants.setForeground(style, Color.BLACK);
+            knownUsername = true;
+        } else {
+            /*
+            if(onlineusers.getColors().get(name) != null) {
+                StyleConstants.setAlignment(style, StyleConstants.ALIGN_LEFT); //Eigentlich ALIGN_LEFT
+                StyleConstants.setBackground(style, Color.WHITE);
+                StyleConstants.setForeground(style, onlineusers.getColors().get(name));
+                knownUsername = true;
+            }
+            */
+        }
+        if(!knownUsername) {
+            StyleConstants.setAlignment(style, StyleConstants.ALIGN_LEFT);
+            StyleConstants.setBackground(style, Color.WHITE);
+            StyleConstants.setForeground(style, Color.BLACK);
+        }
+        //Here is a <a href='http://A'>hyperlink</a>
+        if(style.containsAttribute("hyperlink", true) || style.containsAttribute("hyperlink", false)) {
+            style.removeAttribute("hyperlink");
+        }
+        style.addAttribute("hyperlink", false);
+        Color backup_back = StyleConstants.getBackground(style);
+        Color backup_front = StyleConstants.getForeground(style);
+        try {
+            if(isHyperlink) {
+                /*
+                StyleConstants.setBackground(style, backup_back);
+                StyleConstants.setForeground(style, backup_front);
+                doc.insertString(doc.getLength(), hyperlink_vor, style);
+
+
+
+                StyleConstants.setForeground(style, tp.getBackground());
+                StyleConstants.setForeground(style, Color.BLUE);
+                if(style.containsAttribute("hyperlink", true) || style.containsAttribute("hyperlink", false)) {
+                    style.removeAttribute("hyperlink");
+                }
+                style.addAttribute("hyperlink", hyperlink);
+                style.addAttribute("hyperlink_to", hyperlink_to);
+                style.addAttribute("hyperlink_art", hyperlink_art);
+                doc.insertString(doc.getLength(), hyperlink_string, style);
+                style.removeAttribute("hyperlink_to");
+                style.removeAttribute("hyperlink_art");
+
+
+
+                StyleConstants.setBackground(style, backup_back);
+                StyleConstants.setForeground(style, backup_front);
+                if(style.containsAttribute("hyperlink", true) || style.containsAttribute("hyperlink", false)) {
+                    style.removeAttribute("hyperlink");
+                }
+                style.addAttribute("hyperlink", false);
+                doc.insertString(doc.getLength(), hyperlink_nach + "\n", style);
+                */
+            } else {
+                doc.insertString(doc.getLength(), m.toChat(this) + "\n", style);
+            }
+        } catch (Exception ex) {
+            StaticStandard.logErr("Error: " + ex, ex);
+        }
+    }
+    
     public Thread reloadReceivedMessages() {
         clearText();
         return StaticStandard.execute(() -> {
-            for(MessageEvent me : messages_received) {
-                receiveMessage(me);
+            clearText();
+            for(Message m : messages_received) {
+                addMessage(m);
             }
         });
     }
     
     public ChatTab clearText() {
         textPane.setText("");
+        try {
+            doc.remove(0, doc.getLength());
+        } catch (Exception ex) {
+            StaticStandard.logErr("Error while clearing TextPane: " + ex, ex);
+        }
         return this;
     }
 

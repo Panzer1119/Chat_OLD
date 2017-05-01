@@ -5,8 +5,8 @@
  */
 package de.panzercraft.net;
 
-import de.panzercraft.message.MessageEvent;
-import de.panzercraft.tab.ChatTab;
+import de.panzercraft.message.Message;
+import de.panzercraft.chat.ChatTab;
 
 /**
  *
@@ -35,7 +35,7 @@ public class ConnectorLocalNew extends Connector {
     }
 
     @Override
-    public boolean sendMessage(MessageEvent me) {
+    public boolean sendMessage(Message m) {
         return false;
     }
     

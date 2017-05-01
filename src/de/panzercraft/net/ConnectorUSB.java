@@ -6,8 +6,8 @@
 package de.panzercraft.net;
 
 import de.panzercraft.Chat;
-import de.panzercraft.message.MessageEvent;
-import de.panzercraft.tab.ChatTab;
+import de.panzercraft.message.Message;
+import de.panzercraft.chat.ChatTab;
 import de.panzercraft.util.COMPort;
 import gnu.io.CommPortIdentifier;
 import jaddon.controller.StaticStandard;
@@ -110,7 +110,7 @@ public class ConnectorUSB extends Connector {
                         if(message.getBytes()[message.length() - 1] == new byte[]{13}[0]) {
                             message = message.substring(0, message.length() - 1);
                         }
-                        final MessageEvent me = convertFromArduino(message, Instant.now());
+                        final Message m = convertFromArduino(message, Instant.now());
                         if(message.equals(Key.CONNECT.getKey())) {
                             connected_partner = true;
                             StaticStandard.log("Connected to Partner");
@@ -122,7 +122,7 @@ public class ConnectorUSB extends Connector {
                             connected_arduino = true;
                             StaticStandard.log("Connected to Arduino");
                         } else {
-                            chatTab.receiveMessage(me);
+                            chatTab.receiveMessage(m);
                         }
                     } catch (Exception ex) {
                         StaticStandard.logErr("Error while receiving message: " + ex, ex);
@@ -143,11 +143,14 @@ public class ConnectorUSB extends Connector {
         } catch (Exception ex) {
             StaticStandard.logErr("Error while connecting to " + port + ": " + ex, ex);
         }
-        return connected_arduino;
+        return connected_arduino && connected_partner;
     }
 
     @Override
     public boolean disconnect() {
+        if(!(connected_arduino && connected_partner)) {
+            return false;
+        }
         sendRawMessage(Key.DISCONNECT.getKey());
         link = null;
         connected_partner = false;
@@ -173,43 +176,43 @@ public class ConnectorUSB extends Connector {
     }
     
     @Override
-    public boolean sendMessage(MessageEvent me) {
-        String mm = convertToArduino(me);
+    public boolean sendMessage(Message m) {
+        String mm = convertToArduino(m);
         boolean done = sendRawMessage(mm);
         if(done) {
-            chatTab.receiveMessage(me);
+            chatTab.receiveMessage(m);
             chatTab.chat.textField_send.setText("");
         }
         return done;
     }
     
-    public static String convertToArduino(MessageEvent me) {
+    public static String convertToArduino(Message m) {
         try {
             String message = "";
-            if(me.getSource() != null) {
-                if(me.getSource() instanceof ChatTab) {
-                    message += ((ChatTab) me.getSource()).getUsername();
+            if(m.getSource() != null) {
+                if(m.getSource() instanceof ChatTab) {
+                    message += ((ChatTab) m.getSource()).getUsername();
                 } else {
-                    message += me.getSource().toString();
+                    message += m.getSource().toString();
                 }
             }
             message += USERSPLITSTRING;
-            message += me.getMessage();
+            message += m.getMessage();
             return message;
         } catch (Exception ex) {
             //StaticStandard.logErr("Error while converting to Arduino: " + ex, ex);
-            return me.getMessage();
+            return m.getMessage();
         }
     }
     
-    public static MessageEvent convertFromArduino(String text, Instant timestamp) {
+    public static Message convertFromArduino(String text, Instant timestamp) {
         try {
             String source = text.substring(0, text.indexOf(USERSPLITSTRING));
             String message = text.substring(text.indexOf(USERSPLITSTRING) + USERSPLITSTRING.length());
-            return new MessageEvent(message, source, timestamp);
+            return new Message(message, source, timestamp);
         } catch (Exception ex) {
             //StaticStandard.logErr("Error while converting from Arduino: " + ex, ex);
-            return new MessageEvent(text, null, timestamp);
+            return new Message(text, null, timestamp);
         }
     }
     
