@@ -7,6 +7,7 @@ package de.panzercraft.net;
 
 import de.panzercraft.message.MessageEvent;
 import de.panzercraft.tab.ChatTab;
+import jaddon.controller.StaticStandard;
 
 /**
  *
@@ -17,11 +18,12 @@ public abstract class Connector {
     protected final ChatTab chatTab;
     
     public Connector(ChatTab chatTab) {
+        StaticStandard.logErr("ALARM!!! WWIII!!!");
         this.chatTab = chatTab;
     }
     
-    public abstract boolean connect(Object... options);
-    public abstract boolean disconnect(Object... options);
+    public abstract boolean connect();
+    public abstract boolean disconnect();
     public abstract boolean sendMessage(MessageEvent me);
     
     public String getName() {

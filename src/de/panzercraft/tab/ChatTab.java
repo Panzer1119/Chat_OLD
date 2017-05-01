@@ -156,18 +156,18 @@ public class ChatTab extends JPanel {
         return this;
     }
     
-    public boolean connect(Object... options) {
+    public boolean connect() {
         if(connector == null) {
             return false;
         }
-        return connector.connect(options);
+        return connector.connect();
     }
     
-    public boolean disconnect(Object... options) {
+    public boolean disconnect() {
         if(connector == null) {
             return false;
         }
-        return connector.disconnect(options);
+        return connector.disconnect();
     }
     
     public ChatTab sendMessage(String message) {

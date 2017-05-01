@@ -5,11 +5,17 @@
  */
 package de.panzercraft.net;
 
+import de.panzercraft.Chat;
 import de.panzercraft.message.MessageEvent;
 import de.panzercraft.tab.ChatTab;
+import de.panzercraft.util.COMPort;
+import gnu.io.CommPortIdentifier;
 import jaddon.controller.StaticStandard;
 import java.net.URI;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import javax.swing.JOptionPane;
 import org.ardulink.core.Link;
 import org.ardulink.core.convenience.Links;
 import org.ardulink.util.URIs;
@@ -23,7 +29,7 @@ public class ConnectorUSB extends Connector {
     public static final String USERSPLITSTRING = "/";
     
     public enum Key {
-        DISCONNECT  (":-:--++*9&8ÖL.äÜ*0o9K."),
+        DISCONNECT  ("DISC/ONNECT"),
         STARTED     ("setup");
         
         private final String key;
@@ -58,30 +64,25 @@ public class ConnectorUSB extends Connector {
      * @return 
      */
     @Override
-    public boolean connect(Object... options) {
+    public boolean connect() {
         if(link != null) {
             disconnect();
         }
-        if(options[0] instanceof String) {
-            if(options.length == 1) {
-                port = (String) options[0];
+        final ArrayList<COMPort> ports = getCOMPorts(true, CommPortIdentifier.PORT_SERIAL);
+        Object input = JOptionPane.showInputDialog(Chat.frame, StaticStandard.getLang().getLang("choose_port", "Choose Port:"), StaticStandard.getLang().getLang("port_selection", "Port Selection"), JOptionPane.QUESTION_MESSAGE, null, ports.toArray(), ports.get(0));
+        if(input == null) {
+            return false;
+        }
+        if(input instanceof COMPort) {
+            port = ((COMPort) input).getName();
+            input = JOptionPane.showInputDialog(Chat.frame, StaticStandard.getLang().getLang("baudrate", "Baudrate:"), StaticStandard.getLang().getLang("set_baudrate", "Set Baudrate"), JOptionPane.QUESTION_MESSAGE);
+            if(input == null) {
+                return false;
+            }
+            if(input instanceof String) {
+                baudrate = Integer.parseInt((String) input);
             } else {
-                if(options[1] instanceof Integer) {
-                    switch (options.length) {
-                        case 2:
-                            baudrate = (Integer) options[1];
-                            break;
-                        case 4:
-                            if(options[2] instanceof Boolean && options[3] instanceof Integer) {
-                                pingprobe = (Boolean) options[2];
-                                waitsecs = (Integer) options[3];
-                            } else {
-                                return false;
-                            }   break;
-                        default:
-                            return false;
-                    }
-                }
+                return false;
             }
         } else {
             return false;
@@ -92,17 +93,18 @@ public class ConnectorUSB extends Connector {
             link.addCustomListener(e -> {
                 //StaticStandard.execute(() -> {
                     try {
-                        StaticStandard.logErr("NEWMESSAGE:" + e.getMessage());
-                        final MessageEvent me = convertFromArduino(e.getMessage(), Instant.now());
-                        if(me.getMessage() == null || me.getMessage().isEmpty()) {
+                        if(e.getMessage() == null || e.getMessage().isEmpty()) {
                             return;
                         }
-                        if(me.getMessage().equals(Key.DISCONNECT.getKey())) {
+                        StaticStandard.logErr("NEWMESSAGE:" + e.getMessage());
+                        final MessageEvent me = convertFromArduino(e.getMessage(), Instant.now());
+                        if(e.getMessage().equals(Key.DISCONNECT.getKey())) {
+                            StaticStandard.log("Disconnected");
                             disconnect();
                         } else if(me.getMessage().equalsIgnoreCase(Key.STARTED.getKey())) {
                             StaticStandard.log("Connected");
                         } else {
-                            chatTab.receiveMessage(me);
+                            //chatTab.receiveMessage(me);
                         }
                     } catch (Exception ex) {
                         StaticStandard.logErr("Error while receiving message: " + ex, ex);
@@ -116,9 +118,13 @@ public class ConnectorUSB extends Connector {
     }
 
     @Override
-    public boolean disconnect(Object... options) {
+    public boolean disconnect() {
         sendRawMessage(Key.DISCONNECT.getKey());
         link = null;
+        try {
+            Thread.sleep(500);
+        } catch (Exception ex) {
+        }
         return true;
     }
     
@@ -170,6 +176,27 @@ public class ConnectorUSB extends Connector {
             //StaticStandard.logErr("Error while converting from Arduino: " + ex, ex);
             return new MessageEvent(text, null, timestamp);
         }
+    }
+    
+    public static ArrayList<COMPort> getCOMPorts(boolean whitelist, int... filter) {
+        final ArrayList<COMPort> ports = new ArrayList<>();
+        Enumeration pList = CommPortIdentifier.getPortIdentifiers();
+        while(pList.hasMoreElements()) {
+            CommPortIdentifier cpi = (CommPortIdentifier) pList.nextElement();
+            boolean allowed = !whitelist;
+            for(int f : filter) {
+                if(cpi.getPortType() == f) {
+                    allowed = whitelist;
+                    break;
+                }
+            }
+            if(!allowed) {
+                continue;
+            }
+            COMPort port = new COMPort(cpi.getName(), cpi.getCurrentOwner());
+            ports.add(port);
+        }
+        return ports;
     }
 
 }
